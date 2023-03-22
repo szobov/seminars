@@ -1,26 +1,42 @@
 #+title: Collaborative path planning
 #+Author: Sergei Zobov
-#+OPTIONS: :toc:None
+#+OPTIONS: toc:nil num:nil
 #+REVEAL_THEME:solarized
 #+REVEAL_TRANS:None
+#+REVEAL_MATHJAX_URL:https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js
+#+REVEAL_PLUGINS: (highlight notes)
 
 * Intro
-** Applications
+
+** About me
+
++ Senior Software Engineer at Micropsi Industries
++ Senior Software/Research Engineer at ARRIVAL
++ This talk is based on the experience at ARRIVAL
++ Project: Autonomous factory fueled by Autonomous Robots
+
+** Environments
 
 #+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
 #+CAPTION: [[https://prostheticknowledge.tumblr.com/post/104157032881/meet-amazons-robot-army-brief-video-from-cnn][source]]
 [[file:./images/amazon_warehause.webp]]
-#+REVEAL_HTML: <div>
+#+REVEAL_HTML: <div><br>
 1. Warehouses / Factories
-2. Video Games
+2. Video Games / Miniature Wunderland!
 3. Traffic routing (trains, cars)
 #+REVEAL_HTML: </div>
 #+REVEAL_HTML: </div>
+#+BEGIN_NOTES
 
+Whenever you have to move something with many agents, you need to use the subject.
 
-* Formulation
+Traffic routing: Miniature Wunderland is an excellent example of the problem.
 
-** One problem, many names
+Next slide: But the first issue you will face is:
+
+#+END_NOTES
+
+** One beast, many faces
 
 1) Multi-Agent Path Planning
 2) Multi-Agent Path Finding
@@ -29,64 +45,512 @@
 
 #+BEGIN_NOTES
 
-We have a one problem, which is very extensively researched, but it has too many names in literature
+We have one problem, which is very extensively researched but has too many names in the literature.
+
+How can we reduce this complexity? (next slide)
 
 #+END_NOTES
 
-** Simple assumtion
+** One beast, many faces
 
-Agent == Robot
-
-** Definitions
-
-#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
-#+CAPTION: [[https://www.embarcadero.com/de/case-study/miniatur-wunderland-case-study][source]]
-[[file:./images/miniature-wunderland-dispatchers.jpg]]
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: 1fr 2fr;">
+#+CAPTION: [[https://tenor.com/view/robot-robots-bot-bots-robot-army-gif-19992580][source]]
+[[file:./images/marching_robots.gif]]
 #+REVEAL_HTML: <div>
-
-blabla
-
+#+REVEAL_HTML: <br><br>
++ Agent == Robot
 #+REVEAL_HTML: </div>
 #+REVEAL_HTML: </div>
-#+ATTR_HTML: :width 50% :right
 
-* Roadmap as a graph
+#+BEGIN_NOTES
 
-1. Discrete vs Continious
-2. We always can discretize space, but it always with a cost of the increasing space and complexity
+Next slide:
+But let's now speak about a definition of the problem.
 
-* Dijkstra-based
+#+END_NOTES
 
-1. https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom-1.pdf
-2. https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf
-3. https://ieeexplore.ieee.org/abstract/document/6907401
-4. https://www.youtube.com/watch?v=VJkFHIUHHXw
-5. https://github.com/zhm-real/PathPlanning
+** Definition
+
++ a set $A = \{1,2,...,k\}$ of $k$ agents;
++ an undirected Graph $G=(V,E)$, where $V$ is the node set, and $E$ is the edge set. The nodes represent the possible locations of the agents, while the arcs are the possible connections between such positions;
++ a map $s: A \to V$ that associates each agent with its starting point;
++ a map $t: A \to V$ that associates each agent with its target point.
+
+#+REVEAL: split
+
++ Find a set of paths $P = \{p_1, \ldots, p_n\}$ such that $p_i$'s are feasible paths for respective agent $A_i$'s and no two paths $p_i, p_j$ are in collision.
+
+#+BEGIN_NOTES
+
+Next slide: For curious listeners, why do I talk only about the graph and not real roads?
+
+#+END_NOTES
+
+** Discrete vs Continuous
+
++ Roadmap as a graph
++ We can always discretize space
++ But it always comes with a cost of increasing space and complexity
+
+#+BEGIN_NOTES
+
+In this talk, we want to speak only about discrete path planning.
+
+#+END_NOTES
+
+* Search-based algorithms
+
+#+BEGIN_NOTES
+
+But Let's first remind ourselves about the basics.
 
 
-** Dijkstra
+# 1. https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom-1.pdf
+# 2. https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf
+# 3. https://ieeexplore.ieee.org/abstract/document/6907401
+# 4. https://www.youtube.com/watch?v=VJkFHIUHHXw
+# 5. https://github.com/zhm-real/PathPlanning
+#+END_NOTES
+
+
+** Dijkstra's
 
 #+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
 #+CAPTION: [[https://github.com/zhm-real/PathPlanning][source]]
 [[file:./images/Dijkstra.gif]]
 #+REVEAL_HTML: <div>
 
-blabla
++ An algorithm for finding the shortest paths between nodes in a weighted graph.
++ $\Theta(|E| + |V| \log|V|)$
++ Problem 1: searches in all directions
++ Problem 2: not cooperative
 
 #+REVEAL_HTML: </div>
 #+REVEAL_HTML: </div>
 
 #+BEGIN_NOTES
-I need to add here a
+
 #+END_NOTES
 
 ** A*
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+#+CAPTION: [[https://github.com/zhm-real/PathPlanning][source]]
+[[file:./images/Astar.gif]]
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
++ Adds a heuristic function to direct the search towards a goal
++ $f(n) = g(n) + h(n)$
++ Problem 1: how to choose a better heuristic?
++ Problem 2: not cooperative
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+
+A* algorithm is a more optimized version of Dijkstra's algorithm, which uses a heuristic function to estimate the distance between each node and the end node.
+
+Can be presented by the function of f(n) = g(n) + h(n)
++ n is the last node on the path
++ g(n) is the cost of the path from the start node to n
++ h(n) is a heuristic that estimates the cost of the cheapest path from n to the goal.
+
+This heuristic helps the algorithm to search the most promising paths first and avoid exploring paths that are unlikely to lead to the shortest path.
+
+
+
+#+END_NOTES
+
 ** Local Repair A*
+
++ Cooperative: path planned for each agent individually and re-calculated on each collision.
++ Problem 1: cycles and bottlenecks are common
++ Problem 2: agents are fixed at the goal positions
+
+#+BEGIN_NOTES
+
+Simply saying, it's A*, but with additional recalculation in case of collisions.
+
+#+END_NOTES
+
 ** Cooperative A*
-** Windowed / Hierarchical Cooperative A*
-* NetworkFlow-based
 
-1. https://arc-l.github.io/files/YuRus15ISRR.pdf
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: 600px 500px;">
+#+REVEAL_HTML: <div>
+#+CAPTION: [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom.pdf][source]]
+[[file:./images/space-time-a-start.png]]
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
++ Differce from LRA* only by reservation table
++ Can also be called Space-time A*
++ Problem 1: Heuristic is Manhattan distance
++ Problem 2: Depends on the order of agents
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+
++ Manhattan distance can give poor performance in more challenging environments
+
+Next slide: David Silver proposed next version of the algorithm
+#+END_NOTES
 
 
-**
+** Hierarchical Cooperative A*
+
++ Hierarchy: several "steps" of the algorithm
++ Step 1: calculate all distances in 2D without other agents
++ Step 2: use paths from Step 1 as a heuristic for space-time
++ Optimization: Reverse Resumable A* (RRA*) = spatial A* that starts from the target
+
+#+REVEAL: split
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+#+CAPTION: [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf][source]]
+[[file:./images/blocked_road.png]]
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div><br>
++ Problem 1: agents are fixed at the goal positions
++ Problem 2: sensitivity to agent ordering
++ Problem 3: calculate a complete route to the destination in a large, three-dimensional state space
+#+BEGIN_NOTES
+
++ If this shortest path is not possible in space-time A*, the spatial A* has to calculate the additional shortest path to the destination.
++ RRA* can be resumed if an additional "shortest path" must be calculated.
++ Problem 2: dynamically vary the agent order
+
+#+END_NOTES
+
+
+** Windowed Hierarchical Cooperative A*
+
++ Space-time A* during $d$ steps (search depth) + spatial A* from step $d$.
++ Other agents are only considered for $d$ steps (via the reservation table) and are ignored for the remainder of the search
++ Windowed search can continue once the agent has reached its destination: The agent’s goal is no longer to reach the destination but to complete the window.
+
+** Experiments: environment
+
+#+CAPTION: [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf][source]]
+[[file:./images/experiment_env_search_based.png]]
+
+** Experiments: success rate to a number of agents
+
+#+CAPTION: [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf][source]]
+[[file:./images/experiment_res1_search_based.png]]
+
+** Experiments: number of cycles to number of agents
+
+#+CAPTION: [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf][source]]
+[[file:./images/experiment_res2_search_based.png]]
+
+#+BEGIN_NOTES
+Let's now speak about to other papers.
+#+END_NOTES
+
+
+* Network flow-based
+#+BEGIN_NOTES
+Network flow is an old concept
+Implies mathematical constraints to define an algorithm to calculate a flow in a network (graph)
+#+END_NOTES
+
+** Network flow
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+#+CAPTION: [[https://www.cs.cmu.edu/~avrim/451f11/lectures/lect1025.pdf][source]]
+[[file:./images/network_flow_graph.png]]
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
++ network $N = (G, u, c, S)$.
++ Directed graph $G = (V, E)$.
++ $u, c : E → Z+$ maps defining the capacities and costs on edges.
++ $S ⊂ V$ as the set of sources and sinks.
++ $S+$ denoting the set of sources and $S−$ denoting the set of sink vertices.
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+to define a network flow, we need the following:
++ a graph
++ cost and capacity functions
++ and set of sources and sinks
+
++ Then, we define a few constraints
+#+END_NOTES
+
+#+REVEAL: split
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
++ Edge capacity constraint: $∀e ∈ E$, $f(e) ≤ u(e)$
++ Flow conservation constraints: $∀v∈V$ $\sum_{e∈δ^+ (v)} f(e) − \sum_{e∈ δ^- (v)} f(e) = 0$
+[[file:./images/infinity_pipes.gif]]
+#+REVEAL_HTML: </div>
+#+CAPTION: [[https://gifs.com/gif/3d-pipes-screensaver-1080p-m6J8gZ][source]]
+#+REVEAL_HTML: <div>
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+Think of a network flow as water flowing in pipes
++ edge capacity -- the maximum amount of flow that can be pushed through an edge in the network
++ flow conserv -- the amount of flow entering and leaving a node must be equal
+#+END_NOTES
+
+#+REVEAL: split
+
++ What is the maximum number of units that can be transferred from the source nodes to the sink nodes?
++ $\min\sum_{e ∈ E} c(e) · f (e)$
+
+#+BEGIN_NOTES
+How can we use it?
+We must bake our graph to support multiple agents
+#+END_NOTES
+
+** Time-expanded graph
+
+# #+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+# #+REVEAL_HTML: <div>
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/time_expanded_graph.png]]
+# #+REVEAL_HTML: </div>
+# #+REVEAL_HTML: <div>
+# + $\min\sum_{e ∈ E} c(e) · f (e)$
+# #+REVEAL_HTML: </div>
+# #+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+
++ As with a reservation table, we need to define a way to express the time dimension
++ right graph is the time-expanded representation of the left graph
+
+
++ time interval $T = 4$
+
++ If one of the following is true:
+  1. e = (u, v) is an edge of the static network with c(e) = t − t (the black edges, which retain the costs as c(e)’s);
+  2. u, v are the same vertex of the static network and t − t = 1
++ The green edges are also called holdover edges since travelling through a green edge is the same as the agent not moving
+#+END_NOTES
+
+
+** Time-expanded graph with Gadget
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+
+# TODO: add cost and capacity to gadget plot
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/gadget.png]]
+
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+But authors propose another approach to building a graph represented in the picture.
+
+#+END_NOTES
+
+#+REVEAL: split
+
++ create $2T + 1$ copies of vertices from $G$, with indices 0, 1, 1',... $T'$.
++ denote these copies $v(0) = v(0), v(1), v(1'), v(2), ..., v(T')$.
++ add gadget each edge $(u, v) ∈ G$ and time steps $t, t + 1, 0 ≤ t < T$.
++ Gadget: assign unit capacity to all edges, unit cost to the horizontal middle edge, and zero cost to the other four edges.
++ Green -- unit capacity and cost, blue -- unit capacity and zero cost.
+
+#+BEGIN_NOTES
+The approach is a little bit complicated, but:
++ Gadget is used to prevent "head-on" collisions.
++ Blue edge is used to prevent "meet" collision.
++ Green edge lets the agent stay in the same position.
+
+#+END_NOTES
+
+** Optimal solutions
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+
+#+CAPTION: [[https://cbwmagazine.com/inside-arrival/9-arrival-wemo/][source]]
+[[file:./images/Arrival_WeMo_scaled.jpeg]]
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
++ With fixed $T$ can give an optimal solution for a single-commodity problem with such objectives:
+  1. Minimizing the average time it takes for all agents to reach their goals.
+  2. Minimizing the time it takes for the last agent to reach its goal.
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+As a result, we can obtain a solution, but with a few constraints:
++ single commodity (no 1-1 mapping between agent and target)
+#+END_NOTES
+
+
+** Problems
+
++ Problem 1: how to find an optimal $T$? Authors give only the upper bound for $T$.
++ Problem 2: not for a real-time: $O(n V E \ln(V))$ on a time-expanded graph!
++ Problem 3: how to solve a multi-commodity problem?
+
+#+BEGIN_NOTES
+But for some of the problems, the authors prepared another solution.
+#+END_NOTES
+
+** Multi-commodity problem
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: 400px auto;">
+#+REVEAL_HTML: <div>
+
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/mpp_ilp_optimiation_listing.png]]
+
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
++ Network flow formulation, it becomes possible to establish Integer Linear Programming (ILP) models for optimal multi-agent path planning formulations.
++ Add extra optimizations with a slight loss of optimality.
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+#+BEGIN_NOTES
+The beauty of the Network Flow algorithm is in its "math" nature.
+We can use all the math from the initial definition and express it in ILP.
+#+END_NOTES
+
+** How can it look in code?
+
+#+BEGIN_SRC python
+model.Add(
+    model.Sum(incoming_flow_variables) - model.Sum(outcoming_flow_variables)
+    == 0,
+    f"flow_conservation_for_node_{node_id}_constraint",
+)
+...
+
+status = model.Solve()
+assert status == pywraplp.Solver.OPTIMAL, status
+#+END_SRC
+
+#+BEGIN_NOTES
+One of the possible implementations of the flow conservation constraint.
+#+END_NOTES
+
+
+** Optimizations
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: 400px auto;">
+#+REVEAL_HTML: <div>
+
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/mpp_ilp_new_gadget.png]]
+
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
++ Better encoding of the collision constraints
++ Reachability analysis
++ Divide-and-Conquer Over the Time Domain
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
++ Use a simpler representation to guarantee head-on collision. I don't know why we need so complicated "gadgets".
++ Some agents will never reach paths in a time-expanded graph. Only "starting" nodes can be considered.
++ Calculate the shortest path we a "baseline" algorithm for all agents. Then split this path into parts and use it as intermediate goals.
+#+END_NOTES
+
+
+** Experiments
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/mpp_ilp_map.png]]
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div>
+
+#+REVEAL_HTML: </div>
+
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/mpp_ilp_min_makespan_res.png]]
+#+REVEAL_HTML: </div>
+
+** Experiments (with 4-split optimization)
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+REVEAL_HTML: <div>
+
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/mpp_ilp_min_makespan_res_4_split.png]]
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div><br>
++ The majority of the cases are solved within 10s
++ Solutions for up to 180 robots, which translates to a maximum robot-vertex ratio of 44%
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+** My Experiments
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: 750px 500px;">
+#+REVEAL_HTML: <div>
+
+#+CAPTION: [[https://arxiv.org/abs/1204.5717][source]]
+[[file:./images/time_expanded_30.gif]]
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: <div><br>
++ pink  -- agents
++ red   -- goals
++ green -- finished
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+* Conclusions (subjective)
+
++ Search-based:
+  1. No fancy ILP.
+  2. No guarantees, but it should work fair for most cases.
+  3. Ready for real-time (with the proper implementation).
+
+#+REVEAL: split
+
++ Network-flow:
+  1. A single-commodity case can be used for cluster formation tasks.
+  2. Guarantees of optimality (without optimizations).
+  3. Doesn't scale (without optimizations).
+
+* Papers
+
+Search-based:
+
++ [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf]["Cooperative Pathfinding", D. Silver. AIIDE 2005.]]
++ [[https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom-1.pdf]["Cooperative Pathfinding", D. Silver. AI Game Programming Wisdom 3, pages 99–111, 2006.]]
+
+Netowok flow-based:
+
++ [[https://arxiv.org/abs/1204.5717]["Multi-agent Path Planning and Network Flow", 2013, Jingjin Yu, Steven M. LaValle.]]
++ [[https://arc-l.github.io/files/YuLav16TOR.pdf]["Optimal Multirobot Path Planning on Graphs: Complete Algorithms and Effective Heuristics", 2016, Jingjin Yu, Steven M. LaValle.]]
+
+#+BEGIN_NOTES
+
+There are many other publications, but we won't cover them in this talk.
+
+Let's start with a D.Silver proposal.
+
+#+END_NOTES
+
+
+* Thanks for listening
+
++ [[https://www.linkedin.com/in/szobovdev/][linkedin/szobovdev]]
++ [[https://github.com/szobov][github/szobov]]
