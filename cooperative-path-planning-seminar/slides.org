@@ -1,0 +1,92 @@
+#+title: Collaborative path planning
+#+Author: Sergei Zobov
+#+OPTIONS: :toc:None
+#+REVEAL_THEME:solarized
+#+REVEAL_TRANS:None
+
+* Intro
+** Applications
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+CAPTION: [[https://prostheticknowledge.tumblr.com/post/104157032881/meet-amazons-robot-army-brief-video-from-cnn][source]]
+[[file:./images/amazon_warehause.webp]]
+#+REVEAL_HTML: <div>
+1. Warehouses / Factories
+2. Video Games
+3. Traffic routing (trains, cars)
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+
+* Formulation
+
+** One problem, many names
+
+1) Multi-Agent Path Planning
+2) Multi-Agent Path Finding
+3) Multi-Robot Motion Planning
+4) Collaborative Path Planning
+
+#+BEGIN_NOTES
+
+We have a one problem, which is very extensively researched, but it has too many names in literature
+
+#+END_NOTES
+
+** Simple assumtion
+
+Agent == Robot
+
+** Definitions
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+CAPTION: [[https://www.embarcadero.com/de/case-study/miniatur-wunderland-case-study][source]]
+[[file:./images/miniature-wunderland-dispatchers.jpg]]
+#+REVEAL_HTML: <div>
+
+blabla
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+#+ATTR_HTML: :width 50% :right
+
+* Roadmap as a graph
+
+1. Discrete vs Continious
+2. We always can discretize space, but it always with a cost of the increasing space and complexity
+
+* Dijkstra-based
+
+1. https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom-1.pdf
+2. https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf
+3. https://ieeexplore.ieee.org/abstract/document/6907401
+4. https://www.youtube.com/watch?v=VJkFHIUHHXw
+5. https://github.com/zhm-real/PathPlanning
+
+
+** Dijkstra
+
+#+REVEAL_HTML: <div style="display: grid; grid-template-columns: auto auto;">
+#+CAPTION: [[https://github.com/zhm-real/PathPlanning][source]]
+[[file:./images/Dijkstra.gif]]
+#+REVEAL_HTML: <div>
+
+blabla
+
+#+REVEAL_HTML: </div>
+#+REVEAL_HTML: </div>
+
+#+BEGIN_NOTES
+I need to add here a
+#+END_NOTES
+
+** A*
+** Local Repair A*
+** Cooperative A*
+** Windowed / Hierarchical Cooperative A*
+* NetworkFlow-based
+
+1. https://arc-l.github.io/files/YuRus15ISRR.pdf
+
+
+**
