@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Collaborative path planning</title>
+<meta name="author" content="Sergei Zobov"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="/home/szobov/.emacs.d/.local/straight/build-28.2/revealjs/dist/reveal.css"/>
+
+<link rel="stylesheet" href="/home/szobov/.emacs.d/.local/straight/build-28.2/revealjs/dist/theme/solarized.css" id="theme"/>
+<link rel="stylesheet" href="/home/szobov/.emacs.d/.local/straight/build-28.2/revealjs/plugin/highlight/zenburn.css"/>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide">
+<h1 class="title">Collaborative path planning</h1><h2 class="author">Sergei Zobov</h2><p class="date">Created: 2023-04-27 Thu 18:58</p>
+</section>
+
+<section>
+<section id="slide-orgef954ea">
+<h2 id="orgef954ea">Intro</h2>
+<div class="outline-text-2" id="text-orgef954ea">
+</div>
+</section>
+<section id="slide-orgb68397c">
+<h3 id="orgb68397c">About me</h3>
+<ul>
+<li>Senior Software Engineer at Micropsi Industries</li>
+<li>Senior Software/Research Engineer at ARRIVAL</li>
+<li>This talk is based on the experience at ARRIVAL</li>
+<li>Project: Autonomous factory fueled by Autonomous Robots</li>
+
+</ul>
+
+</section>
+<section id="slide-orgd581923">
+<h3 id="orgd581923">Environments</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+
+<div id="org2ffe641" class="figure">
+<p><img src="./images/amazon_warehause.webp" alt="amazon_warehause.webp" />
+</p>
+<p><span class="figure-number">Figure 1: </span><a href="https://prostheticknowledge.tumblr.com/post/104157032881/meet-amazons-robot-army-brief-video-from-cnn">source</a></p>
+</div>
+<div><br>
+<ol>
+<li>Warehouses / Factories</li>
+<li>Video Games / Miniature Wunderland!</li>
+<li>Traffic routing (trains, cars)</li>
+
+</ol>
+</div>
+</div>
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+Whenever you have to move something with many agents, you need to use the subject.
+</p>
+
+<p>
+Traffic routing: Miniature Wunderland is an excellent example of the problem.
+</p>
+
+<p>
+Next slide: But the first issue you will face is:
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org1ee1dcc">
+<h3 id="org1ee1dcc">One beast, many faces</h3>
+<ol>
+<li>Multi-Agent Path Planning</li>
+<li>Multi-Agent Path Finding</li>
+<li>Multi-Robot Motion Planning</li>
+<li>Collaborative Path Planning</li>
+
+</ol>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+We have one problem, which is very extensively researched but has too many names in the literature.
+</p>
+
+<p>
+How can we reduce this complexity? (next slide)
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org19ea927">
+<h3 id="org19ea927">One beast, many faces</h3>
+<div style="display: grid; grid-template-columns: 1fr 2fr;">
+
+<div id="orge78097b" class="figure">
+<p><img src="./images/marching_robots.gif" alt="marching_robots.gif" />
+</p>
+<p><span class="figure-number">Figure 2: </span><a href="https://tenor.com/view/robot-robots-bot-bots-robot-army-gif-19992580">source</a></p>
+</div>
+<div>
+<br><br>
+<ul>
+<li>Agent == Robot</li>
+
+</ul>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+Next slide:
+But let&rsquo;s now speak about a definition of the problem.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgff50cb6">
+<h3 id="orgff50cb6">Definition</h3>
+<ul>
+<li>a set \(A = \{1,2,...,k\}\) of \(k\) agents;</li>
+<li>an undirected Graph \(G=(V,E)\), where \(V\) is the node set, and \(E\) is the edge set. The nodes represent the possible locations of the agents, while the arcs are the possible connections between such positions;</li>
+<li>a map \(s: A \to V\) that associates each agent with its starting point;</li>
+<li>a map \(t: A \to V\) that associates each agent with its target point.</li>
+
+</ul>
+
+</section>
+<section>
+
+<ul>
+<li>Find a set of paths \(P = \{p_1, \ldots, p_n\}\) such that \(p_i\)&rsquo;s are feasible paths for respective agent \(A_i\)&rsquo;s and no two paths \(p_i, p_j\) are in collision.</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+Next slide: For curious listeners, why do I talk only about the graph and not real roads?
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgdfde59a">
+<h3 id="orgdfde59a">Discrete vs Continuous</h3>
+<ul>
+<li>Roadmap as a graph</li>
+<li>We can always discretize space</li>
+<li>But it always comes with a cost of increasing space and complexity</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+In this talk, we want to speak only about discrete path planning.
+</p>
+
+</aside>
+
+</section>
+</section>
+<section>
+<section id="slide-org0b9786a">
+<h2 id="org0b9786a">Search-based algorithms</h2>
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+But Let&rsquo;s first remind ourselves about the basics.
+</p>
+
+</aside>
+
+
+</section>
+<section id="slide-org15510a3">
+<h3 id="org15510a3">Dijkstra&rsquo;s</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+
+<div id="orgbfa80ca" class="figure">
+<p><img src="./images/Dijkstra.gif" alt="Dijkstra.gif" />
+</p>
+<p><span class="figure-number">Figure 3: </span><a href="https://github.com/zhm-real/PathPlanning">source</a></p>
+</div>
+<div>
+
+<ul>
+<li>An algorithm for finding the shortest paths between nodes in a weighted graph.</li>
+<li>\(\Theta(|E| + |V| \log|V|)\)</li>
+<li>Problem 1: searches in all directions</li>
+<li>Problem 2: not cooperative</li>
+
+</ul>
+
+</div>
+</div>
+
+<aside class="notes">
+<p>
+
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org2c0aa28">
+<h3 id="org2c0aa28">A*</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+<div id="orgcc98b46" class="figure">
+<p><img src="./images/Astar.gif" alt="Astar.gif" />
+</p>
+<p><span class="figure-number">Figure 4: </span><a href="https://github.com/zhm-real/PathPlanning">source</a></p>
+</div>
+</div>
+<div>
+<ul>
+<li>Adds a heuristic function to direct the search towards a goal</li>
+<li>\(f(n) = g(n) + h(n)\)</li>
+<li>Problem 1: how to choose a better heuristic?</li>
+<li>Problem 2: not cooperative</li>
+
+</ul>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+A* algorithm is a more optimized version of Dijkstra&rsquo;s algorithm, which uses a heuristic function to estimate the distance between each node and the end node.
+</p>
+
+<p>
+Can be presented by the function of f(n) = g(n) + h(n)
+</p>
+<ul>
+<li>n is the last node on the path</li>
+<li>g(n) is the cost of the path from the start node to n</li>
+<li>h(n) is a heuristic that estimates the cost of the cheapest path from n to the goal.</li>
+
+</ul>
+
+<p>
+This heuristic helps the algorithm to search the most promising paths first and avoid exploring paths that are unlikely to lead to the shortest path.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgf6f3a2a">
+<h3 id="orgf6f3a2a">Local Repair A*</h3>
+<ul>
+<li>Cooperative: path planned for each agent individually and re-calculated on each collision.</li>
+<li>Problem 1: cycles and bottlenecks are common</li>
+<li>Problem 2: agents are fixed at the goal positions</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+Simply saying, it&rsquo;s A*, but with additional recalculation in case of collisions.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgcce135e">
+<h3 id="orgcce135e">Cooperative A*</h3>
+<div style="display: grid; grid-template-columns: 600px 500px;">
+<div>
+
+<div id="org64d0577" class="figure">
+<p><img src="./images/space-time-a-start.png" alt="space-time-a-start.png" />
+</p>
+<p><span class="figure-number">Figure 5: </span><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom.pdf">source</a></p>
+</div>
+</div>
+<div>
+<ul>
+<li>Differce from LRA* only by reservation table</li>
+<li>Can also be called Space-time A*</li>
+<li>Problem 1: Heuristic is Manhattan distance</li>
+<li>Problem 2: Depends on the order of agents</li>
+
+</ul>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<ul>
+<li>Manhattan distance can give poor performance in more challenging environments</li>
+
+</ul>
+
+<p>
+Next slide: David Silver proposed next version of the algorithm
+</p>
+
+</aside>
+
+
+</section>
+<section id="slide-org979a61e">
+<h3 id="org979a61e">Hierarchical Cooperative A*</h3>
+<ul>
+<li>Hierarchy: several &ldquo;steps&rdquo; of the algorithm</li>
+<li>Step 1: calculate all distances in 2D without other agents</li>
+<li>Step 2: use paths from Step 1 as a heuristic for space-time</li>
+<li>Optimization: Reverse Resumable A* (RRA*) = spatial A* that starts from the target</li>
+
+</ul>
+
+</section>
+<section>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+<div id="org1c5a132" class="figure">
+<p><img src="./images/blocked_road.png" alt="blocked_road.png" />
+</p>
+<p><span class="figure-number">Figure 6: </span><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf">source</a></p>
+</div>
+</div>
+<div><br>
+<ul>
+<li>Problem 1: agents are fixed at the goal positions</li>
+<li>Problem 2: sensitivity to agent ordering</li>
+<li>Problem 3: calculate a complete route to the destination in a large, three-dimensional state space</li>
+
+</ul>
+<aside class="notes">
+<p>
+
+</p>
+
+<ul>
+<li>If this shortest path is not possible in space-time A*, the spatial A* has to calculate the additional shortest path to the destination.</li>
+<li>RRA* can be resumed if an additional &ldquo;shortest path&rdquo; must be calculated.</li>
+<li>Problem 2: dynamically vary the agent order</li>
+
+</ul>
+
+</aside>
+
+
+</section>
+<section id="slide-orgf8c1f0b">
+<h3 id="orgf8c1f0b">Windowed Hierarchical Cooperative A*</h3>
+<ul>
+<li>Space-time A* during \(d\) steps (search depth) + spatial A* from step \(d\).</li>
+<li>Other agents are only considered for \(d\) steps (via the reservation table) and are ignored for the remainder of the search</li>
+<li>Windowed search can continue once the agent has reached its destination: The agent’s goal is no longer to reach the destination but to complete the window.</li>
+
+</ul>
+
+</section>
+<section id="slide-orgd6f6ec7">
+<h3 id="orgd6f6ec7">Experiments: environment</h3>
+
+<div id="org3ffc81b" class="figure">
+<p><img src="./images/experiment_env_search_based.png" alt="experiment_env_search_based.png" />
+</p>
+<p><span class="figure-number">Figure 7: </span><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf">source</a></p>
+</div>
+
+</section>
+<section id="slide-orgf3ab597">
+<h3 id="orgf3ab597">Experiments: success rate to a number of agents</h3>
+
+<div id="orgfe9e5a7" class="figure">
+<p><img src="./images/experiment_res1_search_based.png" alt="experiment_res1_search_based.png" />
+</p>
+<p><span class="figure-number">Figure 8: </span><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf">source</a></p>
+</div>
+
+</section>
+<section id="slide-org0f3f208">
+<h3 id="org0f3f208">Experiments: number of cycles to number of agents</h3>
+
+<div id="orgad60717" class="figure">
+<p><img src="./images/experiment_res2_search_based.png" alt="experiment_res2_search_based.png" />
+</p>
+<p><span class="figure-number">Figure 9: </span><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf">source</a></p>
+</div>
+
+<aside class="notes">
+<p>
+Let&rsquo;s now speak about to other papers.
+</p>
+
+</aside>
+
+
+</section>
+</section>
+<section>
+<section id="slide-org59d6d7b">
+<h2 id="org59d6d7b">Network flow-based</h2>
+<aside class="notes">
+<p>
+Network flow is an old concept
+Implies mathematical constraints to define an algorithm to calculate a flow in a network (graph)
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org2dd8ce0">
+<h3 id="org2dd8ce0">Network flow</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+<div id="org3400520" class="figure">
+<p><img src="./images/network_flow_graph.png" alt="network_flow_graph.png" />
+</p>
+<p><span class="figure-number">Figure 10: </span><a href="https://www.cs.cmu.edu/~avrim/451f11/lectures/lect1025.pdf">source</a></p>
+</div>
+</div>
+<div>
+<ul>
+<li>network \(N = (G, u, c, S)\).</li>
+<li>Directed graph \(G = (V, E)\).</li>
+<li>\(u, c : E → Z+\) maps defining the capacities and costs on edges.</li>
+<li>\(S ⊂ V\) as the set of sources and sinks.</li>
+<li>\(S+\) denoting the set of sources and \(S−\) denoting the set of sink vertices.</li>
+
+</ul>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+to define a network flow, we need the following:
+</p>
+<ul>
+<li>a graph</li>
+<li>cost and capacity functions</li>
+<li>and set of sources and sinks</li>
+
+<li>Then, we define a few constraints</li>
+
+</ul>
+
+</aside>
+
+</section>
+<section>
+
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+<ul>
+<li>Edge capacity constraint: \(∀e ∈ E\), \(f(e) ≤ u(e)\)</li>
+<li>Flow conservation constraints: \(∀v∈V\) \(\sum_{e∈δ^+ (v)} f(e) − \sum_{e∈ δ^- (v)} f(e) = 0\)</li>
+
+</ul>
+
+<div id="org92849ef" class="figure">
+<p><img src="./images/infinity_pipes.gif" alt="infinity_pipes.gif" />
+</p>
+</div>
+</div>
+<div>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+Think of a network flow as water flowing in pipes
+</p>
+<ul>
+<li>edge capacity &#x2013; the maximum amount of flow that can be pushed through an edge in the network</li>
+<li>flow conserv &#x2013; the amount of flow entering and leaving a node must be equal</li>
+
+</ul>
+
+</aside>
+
+</section>
+<section>
+
+<ul>
+<li>What is the maximum number of units that can be transferred from the source nodes to the sink nodes?</li>
+<li>\(\min\sum_{e ∈ E} c(e) · f (e)\)</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+How can we use it?
+We must bake our graph to support multiple agents
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgb1812c2">
+<h3 id="orgb1812c2">Time-expanded graph</h3>
+
+<div id="orgb5ce068" class="figure">
+<p><img src="./images/time_expanded_graph.png" alt="time_expanded_graph.png" />
+</p>
+<p><span class="figure-number">Figure 11: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<ul>
+<li>As with a reservation table, we need to define a way to express the time dimension</li>
+<li>right graph is the time-expanded representation of the left graph</li>
+
+</ul>
+
+
+<ul>
+<li>time interval \(T = 4\)</li>
+
+<li>If one of the following is true:
+<ol>
+<li>e = (u, v) is an edge of the static network with c(e) = t − t (the black edges, which retain the costs as c(e)’s);</li>
+<li>u, v are the same vertex of the static network and t − t = 1</li>
+
+</ol></li>
+<li>The green edges are also called holdover edges since travelling through a green edge is the same as the agent not moving</li>
+
+</ul>
+
+</aside>
+
+
+</section>
+<section id="slide-org6d9bb83">
+<h3 id="org6d9bb83">Time-expanded graph with Gadget</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+
+<div id="org591a96e" class="figure">
+<p><img src="./images/gadget.png" alt="gadget.png" />
+</p>
+<p><span class="figure-number">Figure 12: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+
+</div>
+<div>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+But authors propose another approach to building a graph represented in the picture.
+</p>
+
+</aside>
+
+</section>
+<section>
+
+<ul>
+<li>create \(2T + 1\) copies of vertices from \(G\), with indices 0, 1, 1&rsquo;,&#x2026; \(T'\).</li>
+<li>denote these copies \(v(0) = v(0), v(1), v(1'), v(2), ..., v(T')\).</li>
+<li>add gadget each edge \((u, v) ∈ G\) and time steps \(t, t + 1, 0 ≤ t < T\).</li>
+<li>Gadget: assign unit capacity to all edges, unit cost to the horizontal middle edge, and zero cost to the other four edges.</li>
+<li>Green &#x2013; unit capacity and cost, blue &#x2013; unit capacity and zero cost.</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+The approach is a little bit complicated, but:
+</p>
+<ul>
+<li>Gadget is used to prevent &ldquo;head-on&rdquo; collisions.</li>
+<li>Blue edge is used to prevent &ldquo;meet&rdquo; collision.</li>
+<li>Green edge lets the agent stay in the same position.</li>
+
+</ul>
+
+</aside>
+
+</section>
+<section id="slide-org675fcf1">
+<h3 id="org675fcf1">Optimal solutions</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+
+<div id="org06737ac" class="figure">
+<p><img src="./images/Arrival_WeMo_scaled.jpeg" alt="Arrival_WeMo_scaled.jpeg" />
+</p>
+<p><span class="figure-number">Figure 13: </span><a href="https://cbwmagazine.com/inside-arrival/9-arrival-wemo/">source</a></p>
+</div>
+
+</div>
+<div>
+<ul>
+<li>With fixed \(T\) can give an optimal solution for a single-commodity problem with such objectives:
+<ol>
+<li>Minimizing the average time it takes for all agents to reach their goals.</li>
+<li>Minimizing the time it takes for the last agent to reach its goal.</li>
+
+</ol></li>
+
+</ul>
+</div>
+</div>
+
+<aside class="notes">
+<p>
+As a result, we can obtain a solution, but with a few constraints:
+</p>
+<ul>
+<li>single commodity (no 1-1 mapping between agent and target)</li>
+
+</ul>
+
+</aside>
+
+
+</section>
+<section id="slide-orgc435cf0">
+<h3 id="orgc435cf0">Problems</h3>
+<ul>
+<li>Problem 1: how to find an optimal \(T\)? Authors give only the upper bound for \(T\).</li>
+<li>Problem 2: not for a real-time: \(O(n V E \ln(V))\) on a time-expanded graph!</li>
+<li>Problem 3: how to solve a multi-commodity problem?</li>
+
+</ul>
+
+<aside class="notes">
+<p>
+But for some of the problems, the authors prepared another solution.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-orgabe03a0">
+<h3 id="orgabe03a0">Multi-commodity problem</h3>
+<div style="display: grid; grid-template-columns: 400px auto;">
+<div>
+
+
+<div id="org081b730" class="figure">
+<p><img src="./images/mpp_ilp_optimiation_listing.png" alt="mpp_ilp_optimiation_listing.png" />
+</p>
+<p><span class="figure-number">Figure 14: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+
+</div>
+<div>
+<ul>
+<li>Network flow formulation, it becomes possible to establish Integer Linear Programming (ILP) models for optimal multi-agent path planning formulations.</li>
+<li>Add extra optimizations with a slight loss of optimality.</li>
+
+</ul>
+</div>
+</div>
+<aside class="notes">
+<p>
+The beauty of the Network Flow algorithm is in its &ldquo;math&rdquo; nature.
+We can use all the math from the initial definition and express it in ILP.
+</p>
+
+</aside>
+
+</section>
+<section id="slide-org9cb1a0b">
+<h3 id="org9cb1a0b">How can it look in code?</h3>
+<div class="org-src-container">
+
+<pre><code class="python" >model.Add(
+    model.Sum(incoming_flow_variables) - model.Sum(outcoming_flow_variables)
+    == 0,
+    f"flow_conservation_for_node_{node_id}_constraint",
+)
+...
+
+status = model.Solve()
+assert status == pywraplp.Solver.OPTIMAL, status
+</code></pre>
+</div>
+
+<aside class="notes">
+<p>
+One of the possible implementations of the flow conservation constraint.
+</p>
+
+</aside>
+
+
+</section>
+<section id="slide-orga15a50c">
+<h3 id="orga15a50c">Optimizations</h3>
+<div style="display: grid; grid-template-columns: 400px auto;">
+<div>
+
+
+<div id="org43cc359" class="figure">
+<p><img src="./images/mpp_ilp_new_gadget.png" alt="mpp_ilp_new_gadget.png" />
+</p>
+<p><span class="figure-number">Figure 15: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+
+</div>
+<div>
+<ul>
+<li>Better encoding of the collision constraints</li>
+<li>Reachability analysis</li>
+<li>Divide-and-Conquer Over the Time Domain</li>
+
+</ul>
+</div>
+</div>
+
+<aside class="notes">
+<ul>
+<li>Use a simpler representation to guarantee head-on collision. I don&rsquo;t know why we need so complicated &ldquo;gadgets&rdquo;.</li>
+<li>Some agents will never reach paths in a time-expanded graph. Only &ldquo;starting&rdquo; nodes can be considered.</li>
+<li>Calculate the shortest path we a &ldquo;baseline&rdquo; algorithm for all agents. Then split this path into parts and use it as intermediate goals.</li>
+
+</ul>
+
+</aside>
+
+
+</section>
+<section id="slide-orge1f58b6">
+<h3 id="orge1f58b6">Experiments</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+
+<div id="org353343a" class="figure">
+<p><img src="./images/mpp_ilp_map.png" alt="mpp_ilp_map.png" />
+</p>
+<p><span class="figure-number">Figure 16: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+</div>
+<div>
+
+</div>
+
+
+<div id="org7839ee3" class="figure">
+<p><img src="./images/mpp_ilp_min_makespan_res.png" alt="mpp_ilp_min_makespan_res.png" />
+</p>
+<p><span class="figure-number">Figure 17: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+</div>
+
+</section>
+<section id="slide-org9106fb0">
+<h3 id="org9106fb0">Experiments (with 4-split optimization)</h3>
+<div style="display: grid; grid-template-columns: auto auto;">
+<div>
+
+
+<div id="orgfc4a962" class="figure">
+<p><img src="./images/mpp_ilp_min_makespan_res_4_split.png" alt="mpp_ilp_min_makespan_res_4_split.png" />
+</p>
+<p><span class="figure-number">Figure 18: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+</div>
+<div><br>
+<ul>
+<li>The majority of the cases are solved within 10s</li>
+<li>Solutions for up to 180 robots, which translates to a maximum robot-vertex ratio of 44%</li>
+
+</ul>
+</div>
+</div>
+
+</section>
+<section id="slide-org6f1404f">
+<h3 id="org6f1404f">My Experiments</h3>
+<div style="display: grid; grid-template-columns: 750px 500px;">
+<div>
+
+
+<div id="orgc7b7613" class="figure">
+<p><img src="./images/time_expanded_30.gif" alt="time_expanded_30.gif" />
+</p>
+<p><span class="figure-number">Figure 19: </span><a href="https://arxiv.org/abs/1204.5717">source</a></p>
+</div>
+
+</div>
+<div><br>
+<ul>
+<li>pink  &#x2013; agents</li>
+<li>red   &#x2013; goals</li>
+<li>green &#x2013; finished</li>
+
+</ul>
+</div>
+</div>
+
+</section>
+</section>
+<section>
+<section id="slide-org19c585f">
+<h2 id="org19c585f">Conclusions (subjective)</h2>
+<ul>
+<li>Search-based:
+<ol>
+<li>No fancy ILP.</li>
+<li>No guarantees, but it should work fair for most cases.</li>
+<li>Ready for real-time (with the proper implementation).</li>
+
+</ol></li>
+
+</ul>
+
+</section>
+<section>
+
+<ul>
+<li>Network-flow:
+<ol>
+<li>A single-commodity case can be used for cluster formation tasks.</li>
+<li>Guarantees of optimality (without optimizations).</li>
+<li>Doesn&rsquo;t scale (without optimizations).</li>
+
+</ol></li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-orgb6c7535">
+<h2 id="orgb6c7535">Papers</h2>
+<p>
+Search-based:
+</p>
+
+<ul>
+<li><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIIDE.pdf">&ldquo;Cooperative Pathfinding&rdquo;, D. Silver. AIIDE 2005.</a></li>
+<li><a href="https://www.davidsilver.uk/wp-content/uploads/2020/03/coop-path-AIWisdom-1.pdf">&ldquo;Cooperative Pathfinding&rdquo;, D. Silver. AI Game Programming Wisdom 3, pages 99–111, 2006.</a></li>
+
+</ul>
+
+<p>
+Netowok flow-based:
+</p>
+
+<ul>
+<li><a href="https://arxiv.org/abs/1204.5717">&ldquo;Multi-agent Path Planning and Network Flow&rdquo;, 2013, Jingjin Yu, Steven M. LaValle.</a></li>
+<li><a href="https://arc-l.github.io/files/YuLav16TOR.pdf">&ldquo;Optimal Multirobot Path Planning on Graphs: Complete Algorithms and Effective Heuristics&rdquo;, 2016, Jingjin Yu, Steven M. LaValle.</a></li>
+
+</ul>
+
+<aside class="notes">
+<p>
+
+</p>
+
+<p>
+There are many other publications, but we won&rsquo;t cover them in this talk.
+</p>
+
+<p>
+Let&rsquo;s start with a D.Silver proposal.
+</p>
+
+</aside>
+
+
+</section>
+</section>
+<section>
+<section id="slide-org0b7f6d6">
+<h2 id="org0b7f6d6">Thanks for listening</h2>
+<ul>
+<li><a href="https://www.linkedin.com/in/szobovdev/">linkedin/szobovdev</a></li>
+<li><a href="https://github.com/szobov">github/szobov</a></li>
+
+</ul>
+</section>
+</section>
+</div>
+</div>
+<script src="/home/szobov/.emacs.d/.local/straight/build-28.2/revealjs/dist/reveal.js"></script>
+<script src="/home/szobov/.emacs.d/.local/straight/build-28.2/revealjs/plugin/highlight/highlight.js"></script>
+<script src="/home/szobov/.emacs.d/.local/straight/build-28.2/revealjs/plugin/notes/notes.js"></script>
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+mouseWheel: false,
+fragmentInURL: false,
+hashOneBasedIndex: false,
+pdfSeparateFragments: true,
+overview: true,
+
+transition: 'None',
+transitionSpeed: 'default',
+
+// Plugins with reveal.js 4.x
+plugins: [ RevealHighlight, RevealNotes ],
+
+// Optional libraries used to extend reveal.js
+dependencies: [
+]
+
+});
+</script>
+</body>
+</html>
