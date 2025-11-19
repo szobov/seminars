@@ -4,6 +4,12 @@
 
 End‑to‑End Telemetry for Robotics
 
+--
+
+_Sergei Zobov_
+
+_ROSCon DE&FR 2025_
+
 ---
 
 ### About me
@@ -250,8 +256,18 @@ just docker-up-example
 ```
 ---
 
+### ros2_tracing
+
+* [ros2/ros2_tracing](https://github.com/ros2/ros2_tracing)
+* `ros2_tracing` is a low-level tool, `ros-opentelemetry` is a high-level one
+
+---
+
 ## Thanks for listening
+
 
 - [linkedin/szobovdev](linkedin.com/in/szobovdev/)
 - [github/szobov](github.com/szobov)
 - [blog.szobov.ru](blog.szobov.ru/)
+
+!["qr_repo"](./static/qr_repo.png)
